@@ -50,4 +50,12 @@ export class DesafiosService {
 
     await this.desafioModel.create(criarDesafioDto);
   }
+
+  async consultarDesafioPeloId(_id: string): Promise<Desafio> {
+    return this.desafioModel.findOne({ _id }).exec();
+  }
+
+  async consultarDesafios(): Promise<Desafio[]> {
+    return this.desafioModel.find().exec();
+  }
 }

@@ -21,8 +21,13 @@ export class DesafiosController {
     return this.desafiosService.criarDesafio(createDesafioDto);
   }
 
-  @Get()
+  @Get('/:_id')
   listarDesafioPorId(@Param('_id') _id: string): Promise<Desafio> {
     return this.desafiosService.consultarDesafioPeloId(_id);
+  }
+
+  @Get()
+  listarTodosOsDesafios(): Promise<Desafio[]> {
+    return this.desafiosService.consultarDesafios();
   }
 }
