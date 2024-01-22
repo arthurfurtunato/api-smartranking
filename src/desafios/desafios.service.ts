@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Desafio } from './interface/desafio.interface';
 import { CategoriasService } from 'src/categorias/categorias.service';
+import { DesafioStatus } from './enum/desafio-status.enum';
 
 @Injectable()
 export class DesafiosService {
@@ -30,8 +31,6 @@ export class DesafiosService {
       jogadoresIds.push(jogador._id);
     }
 
-    // 65970369f4ef77a547cbe528
-
     const solicianteIsPlayer = jogadores.filter(
       (jogador) => jogador._id === solicitante,
     );
@@ -46,13 +45,26 @@ export class DesafiosService {
 
     console.log(solicitante);
 
-    await this.categoriaService.consultarCategoriaDoJogador(solicitante);
+    const categoriaDoJogador =
+      await this.categoriaService.consultarCategoriaDoJogador(solicitante);
 
-    await this.desafioModel.create(criarDesafioDto);
+    const desafioCriado = new this.desafioModel(criarDesafioDto);
+
+    desafioCriado.categoria = categoriaDoJogador.categoria;
+    desafioCriado.dataHoraSolicitacao = new Date();
+    desafioCriado.status = DesafioStatus.PENDENTE;
+
+    await desafioCriado.save();
   }
 
   async consultarDesafioPeloId(_id: string): Promise<Desafio> {
-    return this.desafioModel.findOne({ _id }).exec();
+    const desafioEncontrado = await this.desafioModel.findOne({ _id }).exec();
+
+    if (!desafioEncontrado) {
+      throw new NotFoundException(`Desafio ${_id} não encontrado!`);
+    }
+
+    return desafioEncontrado;
   }
 
   async consultarDesafios(): Promise<Desafio[]> {
