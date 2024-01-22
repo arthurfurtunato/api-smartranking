@@ -8,6 +8,7 @@ import { Categoria } from './interface/categoria.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JogadoresService } from 'src/jogadores/jogadores.service';
+import { Jogador } from 'src/jogadores/interfaces';
 
 @Injectable()
 export class CategoriasService {
@@ -106,16 +107,16 @@ export class CategoriasService {
       .exec();
   }
 
-  async consultarCategoriaDoJogador(jogadorId: string): Promise<Categoria> {
+  async consultarCategoriaDoJogador(jogador: Jogador): Promise<Categoria> {
     const categoria = await this.categoriaModel
       .findOne()
       .where('jogadores')
-      .equals(jogadorId)
+      .equals(jogador)
       .exec();
 
     if (!categoria) {
       throw new NotFoundException(
-        `Jogador ${jogadorId} não possui categoria cadastrada!`,
+        `Jogador ${jogador.toString()} não possui categoria cadastrada!`,
       );
     }
 

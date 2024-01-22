@@ -12,6 +12,7 @@ import { CategoriasService } from './categorias.service';
 import { Categoria } from './interface/categoria.interface';
 import { CriarCategoriaDto } from './dto/criar-categoria.dto';
 import { AtualizarCategoriaDto } from './dto/atualizar-categoria.dto';
+import { Jogador } from 'src/jogadores/interfaces';
 
 @Controller('api/v1/categorias')
 export class CategoriasController {
@@ -54,7 +55,7 @@ export class CategoriasController {
 
   @Get('/jogadores/:jogadorId')
   async consultarCategoriaDoJogador(
-    @Param('jogadorId') jogadorId: string,
+    @Param('jogadorId') jogadorId: Jogador,
   ): Promise<Categoria> {
     return this.categoriasService.consultarCategoriaDoJogador(jogadorId);
   }

@@ -4,11 +4,14 @@ import {
   Body,
   UsePipes,
   ValidationPipe,
+  Param,
+  Get,
 } from '@nestjs/common';
 import { DesafiosService } from './desafios.service';
 import { CriarDesafioDto } from './dto/criar-desafio.dto';
+import { Desafio } from './interface/desafio.interface';
 
-@Controller('desafios')
+@Controller('api/v1/desafios')
 export class DesafiosController {
   constructor(private readonly desafiosService: DesafiosService) {}
 
@@ -16,5 +19,10 @@ export class DesafiosController {
   @UsePipes(ValidationPipe)
   create(@Body() createDesafioDto: CriarDesafioDto) {
     return this.desafiosService.criarDesafio(createDesafioDto);
+  }
+
+  @Get()
+  listarDesafioPorId(@Param('_id') _id: string): Promise<Desafio> {
+    return this.desafiosService.consultarDesafioPeloId(_id);
   }
 }

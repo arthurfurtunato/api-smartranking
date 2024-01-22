@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CriarDesafioDto } from './dto/criar-desafio.dto';
 import { JogadoresService } from 'src/jogadores/jogadores.service';
 import { InjectModel } from '@nestjs/mongoose';
@@ -30,16 +30,23 @@ export class DesafiosService {
       jogadoresIds.push(jogador._id);
     }
 
-    if (!jogadoresIds.includes(solicitante._id))
-      throw new Error(`O solicitante deve ser um dos jogadores da partida!`);
+    // 65970369f4ef77a547cbe528
 
-    const solicitanteCategoria =
-      await this.categoriaService.consultarCategoriaDoJogador(solicitante._id);
+    const solicianteIsPlayer = jogadores.filter(
+      (jogador) => jogador._id === solicitante,
+    );
 
-    if (!solicitanteCategoria)
-      throw new Error(
-        `Jogador soliciante não está cadastrado em nenhuma categoria!`,
+    console.log(solicianteIsPlayer);
+
+    if (solicianteIsPlayer.length === 0) {
+      throw new NotFoundException(
+        `O solicitante deve ser um dos jogadores da partida`,
       );
+    }
+
+    console.log(solicitante);
+
+    await this.categoriaService.consultarCategoriaDoJogador(solicitante);
 
     await this.desafioModel.create(criarDesafioDto);
   }
