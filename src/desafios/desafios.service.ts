@@ -1,11 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CriarDesafioDto } from './dto/criar-desafio.dto';
 import { JogadoresService } from 'src/jogadores/jogadores.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Desafio } from './interface/desafio.interface';
+import { Desafio, Partida } from './interface/desafio.interface';
 import { CategoriasService } from 'src/categorias/categorias.service';
 import { DesafioStatus } from './enum/desafio-status.enum';
+import { AtribuirPartidaDto } from './dto/atribuir-partida-dto';
 
 @Injectable()
 export class DesafiosService {
@@ -14,6 +19,8 @@ export class DesafiosService {
     private readonly jogadoresService: JogadoresService,
     @InjectModel('Desafio')
     private readonly desafioModel: Model<Desafio>,
+    @InjectModel('Partida')
+    private readonly partidaModel: Model<Partida>,
   ) {}
 
   async criarDesafio(criarDesafioDto: CriarDesafioDto): Promise<void> {
@@ -105,6 +112,49 @@ export class DesafiosService {
       throw new NotFoundException(`Desafio ${_id} não encontrado!`);
     }
 
-    await this.desafioModel.deleteOne({ _id }).exec();
+    desafioEncontrado.status = DesafioStatus.CANCELADO;
+    await this.desafioModel
+      .findOneAndUpdate({ _id }, { $set: desafioEncontrado })
+      .exec();
+  }
+
+  async atribuirPartidaDesafio(
+    _id: string,
+    atribuirPartidaDto: AtribuirPartidaDto,
+  ): Promise<void> {
+    const desafioEncontrado = await this.desafioModel.findById(_id).exec();
+
+    if (!desafioEncontrado) {
+      throw new NotFoundException(`Desafio ${_id} não encontrado!`);
+    }
+
+    const jogadorFilter = desafioEncontrado.jogadores.filter((jogador) => {
+      return String(jogador._id) === atribuirPartidaDto.def;
+    });
+
+    if (jogadorFilter.length === 0) {
+      throw new NotFoundException(
+        `O jogador vencedor não faz parte do desafio!`,
+      );
+    }
+
+    const partidaCriada = new this.partidaModel(atribuirPartidaDto);
+
+    partidaCriada.categoria = desafioEncontrado.categoria;
+    partidaCriada.jogadores = desafioEncontrado.jogadores;
+
+    const resultado = await partidaCriada.save();
+
+    desafioEncontrado.status = DesafioStatus.REALIZADO;
+    desafioEncontrado.partida = resultado;
+
+    try {
+      await this.desafioModel
+        .findOneAndUpdate({ _id }, { $set: desafioEncontrado })
+        .exec();
+    } catch {
+      await this.partidaModel.deleteOne({ _id: resultado._id }).exec();
+      throw new InternalServerErrorException();
+    }
   }
 }

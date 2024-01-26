@@ -1,20 +1,21 @@
 import { Jogador } from 'src/jogadores/interfaces';
+import { DesafioStatus } from '../enum/desafio-status.enum';
 
 export interface Desafio extends Document {
   dataHoraDesafio: Date;
-  status: string;
+  status: DesafioStatus;
   dataHoraSolicitacao: Date;
   dataHoraResposta: Date;
-  solicitante: string;
+  solicitante: Jogador;
   categoria: string;
   jogadores: Array<Jogador>;
-  partida: string;
+  partida: Partida;
 }
 
 export interface Partida extends Document {
   categoria: string;
   jogadores: Array<Jogador>;
-  def: string;
+  def: Jogador;
   resultado: Array<Resultado>;
 }
 
