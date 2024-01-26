@@ -35,15 +35,11 @@ export class DesafiosService {
       (jogador) => jogador._id === solicitante,
     );
 
-    console.log(solicianteIsPlayer);
-
     if (solicianteIsPlayer.length === 0) {
       throw new NotFoundException(
         `O solicitante deve ser um dos jogadores da partida`,
       );
     }
-
-    console.log(solicitante);
 
     const categoriaDoJogador =
       await this.categoriaService.consultarCategoriaDoJogador(solicitante);
@@ -57,8 +53,15 @@ export class DesafiosService {
     await desafioCriado.save();
   }
 
-  async consultarDesafioPeloId(_id: string): Promise<Desafio> {
-    const desafioEncontrado = await this.desafioModel.findOne({ _id }).exec();
+  async consultarDesafioPeloIdJogador(_id: any): Promise<Array<Desafio>> {
+    const desafioEncontrado = await this.desafioModel
+      .find()
+      .where('jogadores')
+      .in(_id)
+      .populate('jogadores')
+      .populate('solicitante')
+      .populate('partida')
+      .exec();
 
     if (!desafioEncontrado) {
       throw new NotFoundException(`Desafio ${_id} não encontrado!`);
@@ -68,6 +71,40 @@ export class DesafiosService {
   }
 
   async consultarDesafios(): Promise<Desafio[]> {
-    return this.desafioModel.find().exec();
+    return this.desafioModel
+      .find()
+      .populate('jogadores')
+      .populate('solicitante')
+      .populate('partida')
+      .exec();
+  }
+
+  async atualizarDesafio(_id: string, atualizarDesafioDto: any): Promise<void> {
+    const desafioEncontrado = await this.desafioModel.findOne({ _id }).exec();
+
+    if (!desafioEncontrado) {
+      throw new NotFoundException(`Desafio ${_id} não encontrado!`);
+    }
+
+    if (atualizarDesafioDto.status) {
+      desafioEncontrado.dataHoraResposta = new Date();
+    }
+
+    desafioEncontrado.status = atualizarDesafioDto.status;
+    desafioEncontrado.dataHoraDesafio = atualizarDesafioDto.dataHoraDesafio;
+
+    await this.desafioModel
+      .findOneAndUpdate({ _id }, { $set: desafioEncontrado })
+      .exec();
+  }
+
+  async deletarDesafio(_id: string): Promise<void> {
+    const desafioEncontrado = await this.desafioModel.findOne({ _id }).exec();
+
+    if (!desafioEncontrado) {
+      throw new NotFoundException(`Desafio ${_id} não encontrado!`);
+    }
+
+    await this.desafioModel.deleteOne({ _id }).exec();
   }
 }
